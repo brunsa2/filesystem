@@ -1,10 +1,17 @@
 <?php
 
-class Database {
+class Database implements Iterator {
 	private static $instance;
 	
 	private $databaseConnection;
 	private $preparedQuery;
+	
+	private $results;
+	private $valid;
+	private $numberOfRows;
+	private $numberOfRowsLeft;
+	private $numbersOfRowsAffected;
+	private $currentRow;
 	
 	public static function getDatabase() {
 		if(self::$instance == null) {
@@ -52,18 +59,79 @@ class Database {
 		return $this;
 	}
 	
-	public function executeQuery($queryName = '') {
+	public function executeQuery($queryName = '') {		
 		if($queryName == null || $queryName == '') {
 			$this->preparedQueries['current']->execute();
+			
+			$this->results = array();
+			$this->valid = false;
+			$this->numberOfRowsLeft = $this->numberOfRows = $this->currentRow =
+				$this->numbersOfRowsAffected = 0;
+			
+			while($row = $this->preparedQueries['current']->fetchObject()) {
+				$this->results[$this->numberOfRows++] = $row;
+			}
+			
+			$this->numberOfRowsLeft = $this->numberOfRows;
+			$this->numbersOfRowsAffected = $this->preparedQueries['current']->rowCount();
+			$this->currentRow = 0;
+			$this->valid = $this->numberOfRows != 0;
 		} else {
 			$this->preparedQueries['stored'][$queryName]->execute();
+			
+			$this->results = array();
+			$this->valid = false;
+			$this->numberOfRowsLeft = $this->numberOfRows = $this->currentRow =
+				$this->numbersOfRowsAffected = 0;
+			
+			while($row = $this->preparedQueries['stored'][$queryName]->fetchObject()) {
+				$this->results[$this->numberOfRows++] = $row;
+			}
+			
+			$this->numberOfRowsLeft = $this->numberOfRows;
+			$this->numbersOfRowsAffected = $this->preparedQueries['stored'][$queryName]->rowCount();
+			$this->currentRow = 0;
+			$this->valid = $this->numberOfRows != 0;
 		}
 		
 		return $this;
 	}
 	
-	public function getRow() {
-		return $this->preparedQueries['current']->fetch(PDO::FETCH_ASSOC);
+	public function current() {
+		$this->numberOfRowsLeft--;
+		return $this->results[$this->currentRow];
+	}
+	
+	public function rewind() {
+		$this->currentRow = 0;
+	}
+	
+	public function key() {
+		return $this->currentRow;
+	}
+	
+	public function next() {
+		if($this->currentRow < $this->numberOfRows - 1) {
+			$this->currentRow++;
+		} else {
+			$this->valid = false;
+		}
+	}
+	
+	public function valid() {
+		return $this->valid;
+	}
+	
+	public function getNumberOfRows() {
+		return $this->numberOfRows;
+	}
+	
+	public function getNumberOfRowsLeft() {
+		return $this->numberOfRowsLeft;
+	}
+	
+	public function getNumberOfRowsAffected() {
+		return $this->numbersOfRowsAffected;
 	}
 	
 	public function storeQuery($name) {
