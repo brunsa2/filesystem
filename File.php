@@ -4,6 +4,8 @@ class File {
 	const SEEK_BEGINNING = -1;
 	const SEEK_CURRENT = 0;
 	const SEEK_END = 1;
+	
+	private $database;
 
 	private $id;
 	private $content;
@@ -18,11 +20,11 @@ class File {
 	public function __construct($id, $readEnable, $writeEnable, $appendOnly) {
 		$this->id = $id;
 		
-		$database = Database::getDatabase();
-		$database->prepareQuery('SELECT * FROM files WHERE id = ' . $database->name('id'))->storeQuery('GetFile');
-		$database->bindInteger('id', $id)->executeQuery();
+		$this->database = Database::getDatabase();
+		$this->database->prepareQuery('SELECT * FROM files WHERE id = ' . $this->database->name('id'))->storeQuery('File-GetFile');
+		$this->database->bindInteger('id', $id)->executeQuery();
 		
-		foreach($database as $row) {
+		foreach($this->database as $row) {
 			$this->content = $row->content;
 			$this->hash = $row->hash;
 		}
@@ -32,6 +34,8 @@ class File {
 		$this->appendOnly = $appendOnly;
 		$this->size = strlen($this->content);
 		$this->position = 0;
+		
+		$this->database->prepareQuery('SELECT * FROM files WHERE id = ' . $this->database->name('id') . ' AND hash != ' . $this->database->name('hash'))->storeQuery('File-GetChangedFile');
 	}
 	
 	public function close() {
@@ -51,6 +55,12 @@ class File {
 	}
 	
 	public function peek($length = 0) {
+		$this->database->retrieveQuery('File-GetChangedFile')->bindInteger('id', $this->id)->bindInteger('hash', $this->hash)->executeQuery();
+		foreach($this->database as $row) {
+			$this->content = $row->content;
+			$this->hash = $row->hash;
+		}
+		
 		if($this->readEnable) {
 			$length = $length == 0 ? $this->size - $this->position : $length;
 			$length = $this->position + $length > $this->size ? $this->size - $this->position : $length;
