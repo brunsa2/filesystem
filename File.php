@@ -5,28 +5,39 @@ class File {
 	const SEEK_CURRENT = 0;
 	const SEEK_END = 1;
 
+	private $id;
 	private $content;
+	private $hash;
 	
 	private $readEnable;
 	private $writeEnable;
-	private $appendEnable;
+	private $appendOnly;
 	private $size;
 	private $position;
 	
-	public function __construct($content = '', $readEnable, $writeEnable, $appendEnable) {
-		$this->content = $content;
+	public function __construct($id, $readEnable, $writeEnable, $appendOnly) {
+		$this->id = $id;
+		
+		$database = Database::getDatabase();
+		$database->prepareQuery('SELECT * FROM files WHERE id = ' . $database->name('id'))->storeQuery('GetFile');
+		$database->bindInteger('id', $id)->executeQuery();
+		
+		foreach($database as $row) {
+			$this->content = $row->content;
+			$this->hash = $row->hash;
+		}
 		
 		$this->readEnable = $readEnable;
 		$this->writeEnable = $writeEnable;
-		$this->appendEnable = $appendEnable;
-		$this->size = strlen($content);
+		$this->appendOnly = $appendOnly;
+		$this->size = strlen($this->content);
 		$this->position = 0;
 	}
 	
 	public function close() {
 		$this->readEnable = false;
 		$this->writeEnable = false;
-		$this->appendEnable = false;
+		$this->appendOnly = false;
 	}
 	
 	public function read($length = 0) {
@@ -68,7 +79,7 @@ class File {
 	}
 	
 	public function seek($offset, $relative = self::SEEK_CURRENT) {
-		if($this->readEnable || ($this->writeEnable && !$this->appendEnable)) {
+		if($this->readEnable || ($this->writeEnable && !$this->appendOnly)) {
 			$position = $this->position + $offset;
 			
 			switch($relative) {
@@ -94,7 +105,7 @@ class File {
 	public function write($data, $length = 0) {
 		if($this->writeEnable) {
 			$length = $length == 0 ? strlen($data) : $length;
-			$position = $this->appendEnable ? $this->size : $this->position;
+			$position = $this->appendOnly ? $this->size : $this->position;
 			$data = substr($data, 0, $length);
 			
 			if($this->size < $position + $length) {
