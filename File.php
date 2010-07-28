@@ -76,6 +76,15 @@ class File {
 		
 		return $this;
 	}
+	
+	public function write($data, $length = 0) {
+		$length = $length == 0 ? strlen($data) : $length;
+		$data = substr($data, 0, $length);
+		
+		$this->content = substr($this->content, 0, $this->position) . $data . substr($this->content, $this->position + $length + 1);
+		
+		return $length;
+	}
 }
 
 ?>
