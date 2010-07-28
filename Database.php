@@ -59,40 +59,27 @@ class Database implements Iterator {
 		return $this;
 	}
 	
-	public function executeQuery($queryName = '') {		
-		if($queryName == null || $queryName == '') {
-			$this->preparedQueries['current']->execute();
-			
-			$this->results = array();
-			$this->valid = false;
-			$this->numberOfRowsLeft = $this->numberOfRows = $this->currentRow =
-				$this->numbersOfRowsAffected = 0;
-			
-			while($row = $this->preparedQueries['current']->fetchObject()) {
-				$this->results[$this->numberOfRows++] = $row;
-			}
-			
-			$this->numberOfRowsLeft = $this->numberOfRows;
-			$this->numbersOfRowsAffected = $this->preparedQueries['current']->rowCount();
-			$this->currentRow = 0;
-			$this->valid = $this->numberOfRows != 0;
-		} else {
-			$this->preparedQueries['stored'][$queryName]->execute();
-			
-			$this->results = array();
-			$this->valid = false;
-			$this->numberOfRowsLeft = $this->numberOfRows = $this->currentRow =
-				$this->numbersOfRowsAffected = 0;
-			
-			while($row = $this->preparedQueries['stored'][$queryName]->fetchObject()) {
-				$this->results[$this->numberOfRows++] = $row;
-			}
-			
-			$this->numberOfRowsLeft = $this->numberOfRows;
-			$this->numbersOfRowsAffected = $this->preparedQueries['stored'][$queryName]->rowCount();
-			$this->currentRow = 0;
-			$this->valid = $this->numberOfRows != 0;
+	public function executeQuery($queryName = '') {
+		$preparedQuery = $this->preparedQueries['current'];
+		if($queryName != null && $queryName != '') {
+			$preparedQuery = $this->preparedQueries['stored'][$queryName];
 		}
+		
+		$preparedQuery->execute();
+		
+		$this->results = array();
+		$this->valid = false;
+		$this->numberOfRowsLeft = $this->numberOfRows = $this->currentRow =
+			$this->numbersOfRowsAffected = 0;
+			
+		while($row = $preparedQuery->fetchObject()) {
+			$this->results[$this->numberOfRows++] = $row;
+		}
+		
+		$this->numberOfRowsLeft = $this->numberOfRows;
+		$this->numbersOfRowsAffected = $preparedQuery->rowCount();
+		$this->currentRow = 0;
+		$this->valid = $this->numberOfRows != 0;
 		
 		return $this;
 	}
