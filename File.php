@@ -19,9 +19,9 @@ class File {
 	
 	public function __construct($id, $readEnable, $writeEnable, $appendOnly) {
 		$this->id = $id;
-		
+
 		$this->database = Database::getDatabase();
-		$this->database->prepareQuery('SELECT * FROM files WHERE id = ' . $this->database->name('id'))->storeQuery('File-GetFile');
+		$this->database->prepareQuery('SELECT hash, content FROM links, files WHERE links.id = ' . $this->database->name('id') . ' AND links.file = files.id')->storeQuery('File-GetFile');
 		$this->database->bindInteger('id', $id)->executeQuery();
 		
 		foreach($this->database as $row) {
@@ -36,8 +36,8 @@ class File {
 		$this->size = strlen($this->content);
 		$this->position = 0;
 		
-		$this->database->prepareQuery('SELECT * FROM files WHERE id = ' . $this->database->name('id') . ' AND hash != ' . $this->database->name('hash'))->storeQuery('File-GetChangedFile');
-		$this->database->prepareQuery('UPDATE files SET content = ' . $this->database->name('content') . ', hash = SHA1(' . $this->database->name('content') . ') WHERE id = ' . $this->database->name('id'))->storeQuery('File-StoreFile');
+		$this->database->prepareQuery('SELECT hash, content FROM links, files WHERE links.id = ' . $this->database->name('id') . ' AND links.file = files.id AND hash != ' . $this->database->name('hash'))->storeQuery('File-GetChangedFile');
+		$this->database->prepareQuery('UPDATE links, files SET files.content = ' . $this->database->name('content') . ', files.hash = SHA1(' . $this->database->name('content') . ') WHERE links.id = ' . $this->database->name('id') . ' AND links.file = files.id')->storeQuery('File-StoreFile');
 	}
 	
 	public function close() {
