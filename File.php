@@ -10,6 +10,7 @@ class File {
 	private $id;
 	private $content;
 	private $hash;
+	private $name;
 	
 	private $readEnable;
 	private $writeEnable;
@@ -30,6 +31,13 @@ class File {
 			$this->hash = $row->hash;
 		}
 		
+		$this->database->prepareQuery('SELECT name FROM links WHERE id = ' . $this->database->name('id'))->storeQuery('File-GetName');
+		$this->database->bindInteger('id', $id)->executeQuery();
+		
+		foreach($this->database as $row) {
+			$this->name = $row->name;
+		}
+		
 		$this->readEnable = $readEnable;
 		$this->writeEnable = $writeEnable;
 		$this->appendOnly = $appendOnly;
@@ -38,6 +46,7 @@ class File {
 		
 		$this->database->prepareQuery('SELECT hash, content FROM links, files WHERE links.id = ' . $this->database->name('id') . ' AND links.file = files.id AND hash != ' . $this->database->name('hash'))->storeQuery('File-GetChangedFile');
 		$this->database->prepareQuery('UPDATE links, files SET files.content = ' . $this->database->name('content') . ', files.hash = SHA1(' . $this->database->name('content') . ') WHERE links.id = ' . $this->database->name('id') . ' AND links.file = files.id')->storeQuery('File-StoreFile');
+		$this->database->prepareQuery('UPDATE links SET name = ' . $this->database->name('name') . ' WHERE id = ' . $this->database->name('id'))->storeQuery('File-Rename');
 	}
 	
 	public function close() {
@@ -156,6 +165,15 @@ class File {
 		} else {
 			return false;
 		}
+	}
+	
+	public function name($name = '') {
+		if($name != null & $name != '') {
+			$this->database->retrieveQuery('File-Rename')->bindString('name', $name)->bindInteger('id', $this->id)->executeQuery();
+			$this->name = $name;
+		}
+		
+		return $this->name;
 	}
 }
 
