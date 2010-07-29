@@ -19,6 +19,7 @@ class Tag {
 		
 		$this->database->prepareQuery('UPDATE tags SET name = ' . $this->database->name('name') . ' WHERE id = ' . $this->database->name('id'))->storeQuery('Tag-SetTagName');
 		$this->database->prepareQuery('SELECT parent FROM tags WHERE id = ' . $this->database->name('id'))->storeQuery('Tag-GetParent');
+		$this->database->prepareQuery('SELECT id FROM assigns, links WHERE assigns.tag = ' . $this->database->name('id'))->storeQuery('Tag-GetFiles');
 	}
 	
 	public function name($name = '') {
@@ -40,6 +41,19 @@ class Tag {
 		}
 		
 		return $parentTag;
+	}
+	
+	public function getFiles() {
+		$files = array();
+		$filesPointer = 0;
+		
+		$this->database->retrieveQuery('Tag-GetFiles')->bindInteger('id', $this->id)->executeQuery();
+		
+		foreach($this->database as $row) {
+			$files[$filesPointer++] = new File($row->id, true, false, false);
+		}
+		
+		return $files;
 	}
 }
 
