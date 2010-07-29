@@ -148,7 +148,7 @@ class File {
 				$this->truncate($position + $length);
 			}
 			
-			$this->content = substr($this->content, 0, $position) . $data . substr($this->content, $position + $length + 1);
+			$this->content = substr($this->content, 0, $position) . $data . substr($this->content, $position + $length);
 			
 			$this->database->retrieveQuery('File-StoreFile')->bindInteger('id', $this->id)->bindInteger('content', $this->content)->executeQuery();
 			
