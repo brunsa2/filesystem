@@ -26,6 +26,7 @@ class File {
 		
 		foreach($this->database as $row) {
 			$this->content = $row->content;
+			$this->size = strlen($row->content);
 			$this->hash = $row->hash;
 		}
 		
@@ -36,6 +37,7 @@ class File {
 		$this->position = 0;
 		
 		$this->database->prepareQuery('SELECT * FROM files WHERE id = ' . $this->database->name('id') . ' AND hash != ' . $this->database->name('hash'))->storeQuery('File-GetChangedFile');
+		$this->database->prepareQuery('UPDATE files SET content = ' . $this->database->name('content') . ', hash = SHA1(' . $this->database->name('content') . ') WHERE id = ' . $this->database->name('id'))->storeQuery('File-StoreFile');
 	}
 	
 	public function close() {
@@ -58,6 +60,7 @@ class File {
 		$this->database->retrieveQuery('File-GetChangedFile')->bindInteger('id', $this->id)->bindInteger('hash', $this->hash)->executeQuery();
 		foreach($this->database as $row) {
 			$this->content = $row->content;
+			$this->size = strlen($row->content);
 			$this->hash = $row->hash;
 		}
 		
@@ -72,6 +75,13 @@ class File {
 	
 	public function truncate($length) {
 		if($this->writeEnable) {
+			$this->database->retrieveQuery('File-GetChangedFile')->bindInteger('id', $this->id)->bindInteger('hash', $this->hash)->executeQuery();
+			foreach($this->database as $row) {
+				$this->content = $row->content;
+				$this->size = strlen($row->content);
+				$this->hash = $row->hash;
+			}
+			
 			if($length > $this->size) {
 				for($currentNullCharacter = 0; $currentNullCharacter < ($length - $this->size); $currentNullCharacter++) {
 					$this->content .= chr(0);
@@ -82,6 +92,8 @@ class File {
 			
 			$this->size = $length;
 			
+			$this->database->retrieveQuery('File-StoreFile')->bindInteger('id', $this->id)->bindInteger('content', $this->content)->executeQuery();
+			
 			return true;
 		} else {
 			return false;
@@ -90,6 +102,13 @@ class File {
 	
 	public function seek($offset, $relative = self::SEEK_CURRENT) {
 		if($this->readEnable || ($this->writeEnable && !$this->appendOnly)) {
+			$this->database->retrieveQuery('File-GetChangedFile')->bindInteger('id', $this->id)->bindInteger('hash', $this->hash)->executeQuery();
+			foreach($this->database as $row) {
+				$this->content = $row->content;
+				$this->size = strlen($row->content);
+				$this->hash = $row->hash;
+			}
+		
 			$position = $this->position + $offset;
 			
 			switch($relative) {
@@ -114,6 +133,13 @@ class File {
 	
 	public function write($data, $length = 0) {
 		if($this->writeEnable) {
+			$this->database->retrieveQuery('File-GetChangedFile')->bindInteger('id', $this->id)->bindInteger('hash', $this->hash)->executeQuery();
+			foreach($this->database as $row) {
+				$this->content = $row->content;
+				$this->size = strlen($row->content);
+				$this->hash = $row->hash;
+			}
+			
 			$length = $length == 0 ? strlen($data) : $length;
 			$position = $this->appendOnly ? $this->size : $this->position;
 			$data = substr($data, 0, $length);
@@ -123,6 +149,8 @@ class File {
 			}
 			
 			$this->content = substr($this->content, 0, $position) . $data . substr($this->content, $position + $length + 1);
+			
+			$this->database->retrieveQuery('File-StoreFile')->bindInteger('id', $this->id)->bindInteger('content', $this->content)->executeQuery();
 			
 			return $length;
 		} else {
