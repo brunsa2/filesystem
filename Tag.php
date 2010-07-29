@@ -18,6 +18,7 @@ class Tag {
 		}
 		
 		$this->database->prepareQuery('UPDATE tags SET name = ' . $this->database->name('name') . ' WHERE id = ' . $this->database->name('id'))->storeQuery('Tag-SetTagName');
+		$this->database->prepareQuery('SELECT parent FROM tags WHERE id = ' . $this->database->name('id'))->storeQuery('Tag-GetParent');
 	}
 	
 	public function name($name = '') {
@@ -27,6 +28,18 @@ class Tag {
 		}
 		
 		return $this->name;
+	}
+	
+	public function parent() {
+		$this->database->retrieveQuery('Tag-GetParent')->bindInteger('id', $this->id)->executeQuery();
+		
+		$parentTag = null;
+		
+		foreach($this->database as $row) {
+			$parentTag = new Tag($row->parent);
+		}
+		
+		return $parentTag;
 	}
 }
 
