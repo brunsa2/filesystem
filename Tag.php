@@ -1,10 +1,10 @@
 <?php
 
 class Tag {
-	protected $database;
+	private $database;
 	
-	protected $id;
-	protected $name;
+	private $id;
+	private $name;
 	
 	public function __construct($id) {
 		$this->id = $id;
