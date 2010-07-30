@@ -8,15 +8,21 @@ class Filesystem {
 	
 	private static $instance;
 	
-	private static $rootTag = new Tag(1);
-	private static $rootFolder = new Folder(2);
+	private static $rootTag;
+	private static $rootFolder;
 	
 	public function getFilesystem() {
 		if(self::$instance == null) {
 			self::$instance = new Filesystem();
+			self::$instance->initializeRoots();
 		}
 		
 		return self::$instance;
+	}
+	
+	private function initializeRoots() {
+		self::$rootTag = new Tag(1);
+		self::$rootFolder = new Folder(2);
 	}
 	
 	public static function getRootTag() {
