@@ -10,7 +10,7 @@ class Folder {
 		$this->id = $id;
 		
 		$this->database = Database::getDatabase();
-		$this->database->bindInteger('id', $id)->executeQuery();
+		$this->database->retrieveQuery('Folder-GetFolder')->bindInteger('id', $id)->executeQuery();
 		
 		foreach($this->database as $row) {
 			$this->name = $row->name;
