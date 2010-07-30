@@ -4,6 +4,26 @@ class Folder extends Tag {
 	public function __construct($id) {
 		parent::__construct($id);
 		
+		$searchForParent = true;
+		
+		$currentTagID = $id;
+		
+		while($searchForParent) {
+			$this->database->retrieveQuery('Tag-GetParent')->bindInteger('id', $currentTagID)->executeQuery();
+			
+			foreach($this->database as $row) {
+				if($row->parent == null) {
+					throw new FilesystemException(FilesystemException::FOLDER_DOES_NOT_EXIST_EXCEPTION);
+				} else {
+					$currentTagID = $row->parent;
+					
+					if($row->parent = 2) {
+						$searchForParent = false;
+					}
+				}
+			}
+		}
+		
 		$this->database->prepareQuery('SELECT id FROM links, assigns WHERE links.id = assigns.link AND assigns.tag = ' . $this->database->name('id'))->storeQuery('Folder-GetFiles');
 		$this->database->prepareQuery('SELECT id FROM tags WHERE parent = ' . $this->database->name('id'))->storeQuery('Folder-GetFolders');
 	}
