@@ -18,7 +18,7 @@ class FilesystemException extends Exception {
 			$this->message = $this->exceptionMessages[$code];
 			$this->extraData = $extraData;
 		} else {
-			throw new FilesystemException(self::INVALID_EXCEPTION, $code)
+			throw new FilesystemException(self::INVALID_EXCEPTION, $code);
 		}
 	}
 	
