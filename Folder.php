@@ -20,6 +20,8 @@ class Folder {
 		$this->database->prepareQuery('UPDATE folders SET name = ' . $this->database->name('name') . ' WHERE id = ' . $this->database->name('id'))->storeQuery('Folder-SetFolderName');
 		$this->database->prepareQuery('SELECT id FROM links WHERE folder = ' . $this->database->name('id'))->storeQuery('Folder-GetFiles');
 		$this->database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . $this->database->name('id'))->storeQuery('Folder-GetFolders');
+		$this->database->prepareQuery('INSERT INTO folders VALUES(NULL, :id, :name)')->storeQuery('Folder-MakeFolder');
+		$this->database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . $this->database->name('id') . ' AND name = ' . $this->database->name('name'))->storeQuery('Folder-GetNewFolder');
 	}
 	
 	public function name($name = '') {
@@ -55,6 +57,38 @@ class Folder {
 		}
 		
 		return $folders;
+	}
+	
+	public function makeFolder($name) {
+		if(!is_string($name) || $name == '') {
+			return;
+		}
+		
+		$name = (string) $name;
+		
+		$currentFolders = $this->getFoldersInFolder();
+		
+		foreach($currentFolders as $folder) {			
+			if((string) $folder == $name) {
+				return;
+			}
+		}
+		
+		$this->database->retrieveQuery('Folder-MakeFolder')->bindInteger('id', $this->id)->bindString('name', $name)->executeQuery();
+		
+		$newFolder = null;
+		
+		$this->database->retrieveQuery('Folder-GetNewFolder')->bindInteger('id', $this->id)->bindString('name', $name)->executeQuery();
+		
+		foreach($this->database as $row) {
+			$newFolder = new Folder($row->id);
+		}
+		
+		return $newFolder;
+	}
+	
+	public function __toString() {
+		return $this->name();
 	}
 }
 
