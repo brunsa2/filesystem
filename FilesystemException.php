@@ -9,7 +9,6 @@ class FilesystemException extends Exception {
 		self::INVALID_EXCEPTION => 'Invalid exception'
 	);
 	
-	private $code;
 	private $extraData;
 	
 	public function __construct($code, $extraData = null) {
