@@ -43,10 +43,6 @@ class Filesystem {
 	public static function getRootFolder() {
 		return self::$rootFolder;
 	}
-	
-	private function __construct() {
-		
-	}
 }
 
 ?>
