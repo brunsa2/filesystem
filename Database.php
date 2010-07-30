@@ -130,6 +130,10 @@ class Database implements Iterator {
 		$this->preparedQueries['current'] = $this->preparedQueries['stored'][$name];
 		return $this;
 	}
+	
+	public function __toString() {
+		return $this->preparedQueries['current']->queryString;
+	}
 }
 
 ?>
