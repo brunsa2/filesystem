@@ -1,36 +1,34 @@
 <?php
 
-class Folder extends Tag {
+class Folder {
+	protected $database;
+	
+	protected $id;
+	protected $name;
+	
 	public function __construct($id) {
-		parent::__construct($id);
+		$this->id = $id;
 		
-		$searchForParent = true;
+		$this->database = Database::getDatabase();
+		$this->database->prepareQuery('SELECT name FROM folders WHERE id = ' . $this->database->name('id'))->storeQuery('Folder-GetFolder');
+		$this->database->bindInteger('id', $id)->executeQuery();
 		
-		$currentTagID = $id;
-		
-		while($searchForParent) {
-			if($id == 2) {
-				$searchForParent = false;
-				break;
-			}
-			
-			$this->database->retrieveQuery('Tag-GetParent')->bindInteger('id', $currentTagID)->executeQuery();
-			
-			foreach($this->database as $row) {				
-				if($row->parenttag == null) {
-					throw new FilesystemException(FilesystemException::FOLDER_DOES_NOT_EXIST_EXCEPTION);
-				} else {
-					$currentTagID = $row->parenttag;
-					
-					if($row->parenttag == 2) {
-						$searchForParent = false;
-					}
-				}
-			}
+		foreach($this->database as $row) {
+			$this->name = $row->name;
 		}
 		
-		$this->database->prepareQuery('SELECT id FROM links, assigns WHERE links.id = assigns.link AND assigns.tag = ' . $this->database->name('id'))->storeQuery('Folder-GetFiles');
-		$this->database->prepareQuery('SELECT id FROM tags WHERE parent = ' . $this->database->name('id'))->storeQuery('Folder-GetFolders');
+		$this->database->prepareQuery('UPDATE folders SET name = ' . $this->database->name('name') . ' WHERE id = ' . $this->database->name('id'))->storeQuery('Folder-SetFolderName');
+		$this->database->prepareQuery('SELECT id FROM links WHERE folder = ' . $this->database->name('id'))->storeQuery('Folder-GetFiles');
+		$this->database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . $this->database->name('id'))->storeQuery('Folder-GetFolders');
+	}
+	
+	public function name($name = '') {
+		if($name != null && $name != '') {
+			$this->database->retrieveQuery('Folder-SetFolderName')->bindString('name', $name)->bindInteger('id', $this->id)->executeQuery();
+			$this->name = $name;
+		}
+		
+		return $this->name;
 	}
 	
 	public function getFilesInFolder() {
