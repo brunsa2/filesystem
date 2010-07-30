@@ -9,9 +9,14 @@ class Folder extends Tag {
 		$currentTagID = $id;
 		
 		while($searchForParent) {
+			if($id == 2) {
+				$searchForParent = false;
+				break;
+			}
+			
 			$this->database->retrieveQuery('Tag-GetParent')->bindInteger('id', $currentTagID)->executeQuery();
 			
-			foreach($this->database as $row) {
+			foreach($this->database as $row) {				
 				if($row->parenttag == null) {
 					throw new FilesystemException(FilesystemException::FOLDER_DOES_NOT_EXIST_EXCEPTION);
 				} else {
