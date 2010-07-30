@@ -55,6 +55,26 @@ class Tag {
 		
 		return $files;
 	}
+	
+	public function isDescendantOf($tag) {
+		$currentTagID = $this->id;
+		
+		while(true) {
+			$this->database->retrieveQuery('Tag-GetParent')->bindInteger('id', $currentTagID)->executeQuery();
+			
+			foreach($this->database as $row) {
+				if($row->parent == null) {
+					return false;
+				} else {
+					$currentTagID = $row->parent;
+					
+					if($row->parent = $tag->id) {
+						return true;
+					}
+				}
+			}
+		}
+	}
 }
 
 ?>
