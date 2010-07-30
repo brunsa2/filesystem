@@ -18,7 +18,7 @@ class Tag {
 		}
 		
 		$this->database->prepareQuery('UPDATE tags SET name = ' . $this->database->name('name') . ' WHERE id = ' . $this->database->name('id'))->storeQuery('Tag-SetTagName');
-		$this->database->prepareQuery('SELECT parent FROM tags WHERE id = ' . $this->database->name('id'))->storeQuery('Tag-GetParent');
+		$this->database->prepareQuery('SELECT parenttag FROM tags WHERE id = ' . $this->database->name('id'))->storeQuery('Tag-GetParent');
 		$this->database->prepareQuery('SELECT id FROM assigns, links WHERE assigns.tag = ' . $this->database->name('id'))->storeQuery('Tag-GetFiles');
 	}
 	
@@ -37,7 +37,7 @@ class Tag {
 		$parentTag = null;
 		
 		foreach($this->database as $row) {
-			$parentTag = new Tag($row->parent);
+			$parentTag = new Tag($row->parenttag);
 		}
 		
 		return $parentTag;
@@ -63,12 +63,12 @@ class Tag {
 			$this->database->retrieveQuery('Tag-GetParent')->bindInteger('id', $currentTagID)->executeQuery();
 			
 			foreach($this->database as $row) {
-				if($row->parent == null) {
+				if($row->parenttag == null) {
 					return false;
 				} else {
-					$currentTagID = $row->parent;
+					$currentTagID = $row->parenttag;
 					
-					if($row->parent = $tag->id) {
+					if($row->parenttag = $tag->id) {
 						return true;
 					}
 				}
