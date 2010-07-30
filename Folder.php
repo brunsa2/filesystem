@@ -56,7 +56,6 @@ class Folder extends Tag {
 			$folders[$foldersPointer++] = new Folder($row->id);
 		}
 		
-		
 		return $folders;
 	}
 }
