@@ -5,6 +5,7 @@ class Folder extends Tag {
 		parent::__construct($id);
 		
 		$this->database->prepareQuery('SELECT id FROM links, assigns WHERE links.id = assigns.link AND assigns.tag = ' . $this->database->name('id'))->storeQuery('Folder-GetFiles');
+		$this->database->prepareQuery('SELECT id FROM tags WHERE parent = ' . $this->database->name('id'))->storeQuery('Folder-GetFolders');
 	}
 	
 	public function getFilesInFolder() {
@@ -18,6 +19,20 @@ class Folder extends Tag {
 		}
 		
 		return $files;
+	}
+	
+	public function getFoldersInFolder() {
+		$this->database->retrieveQuery('Folder-GetFolders')->bindInteger('id', $this->id)->executeQuery();
+		
+		$folders = array();
+		$foldersPointer = 0;
+		
+		foreach($this->database as $row) {
+			$folders[$foldersPointer++] = new Folder($row->id);
+		}
+		
+		
+		return $folders;
 	}
 }
 
