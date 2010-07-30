@@ -31,6 +31,10 @@ class Tag {
 		return $this->name;
 	}
 	
+	public function id() {
+		return $this->id;
+	}
+	
 	public function parentTag() {
 		$this->database->retrieveQuery('Tag-GetParent')->bindInteger('id', $this->id)->executeQuery();
 		
