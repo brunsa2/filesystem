@@ -10,12 +10,18 @@ class Folder {
 		$this->id = $id;
 		
 		$this->database = Database::getDatabase();
-		$this->database->prepareQuery('SELECT name FROM folders WHERE id = ' . name('id'));
+		$this->database->prepareQuery('SELECT name FROM folders WHERE id = ' . name('id'), 'Folder-GetFolder');
 		$this->database->select('Folder-GetFolder')->bindInteger('id', $id);
 		
 		foreach($this->database->executeQuery() as $row) {
 			$this->name = $row->name;
 		}
+		
+		$this->database->prepareQuery('UPDATE folders SET name = ' . name('name') . ' WHERE id = ' . name('id'), 'Folder-SetFolderName');
+		$this->database->prepareQuery('SELECT id FROM links WHERE folder = ' . name('id'), 'Folder-GetFiles');
+		$this->database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . name('id'), 'Folder-GetFolders');
+		$this->database->prepareQuery('INSERT INTO folders VALUES(NULL, ' . name('id') . ', ' . name('name') . ')', 'Folder-MakeFolder');
+		$this->database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . name('id') . ' AND name = ' . name('name'), 'Folder-GetNewFolder');
 	}
 	
 	/*
@@ -35,7 +41,7 @@ class Folder {
 	
 	public function name($name = '') {
 		if($name != null && $name != '') {
-			$this->database->retrieveQuery('Folder-SetFolderName')->bindString('name', $name)->bindInteger('id', $this->id)->executeQuery();
+			$this->database->select('Folder-SetFolderName')->bindString('name', $name)->bindInteger('id', $this->id)->executeQuery();
 			$this->name = $name;
 		}
 		
@@ -43,12 +49,12 @@ class Folder {
 	}
 	
 	public function getFilesInFolder() {
-		$this->database->retrieveQuery('Folder-GetFiles')->bindInteger('id', $this->id)->executeQuery();
+		$this->database->select('Folder-GetFiles')->bindInteger('id', $this->id);
 		
 		$files = array();
 		$filesPointer = 0;
 		
-		foreach($this->database as $row) {
+		foreach($this->database->executeQuery() as $row) {
 			$files[$filesPointer++] = new File($row->id, true, true, false);
 		}
 		
@@ -56,18 +62,13 @@ class Folder {
 	}
 	
 	public function getFoldersInFolder() {
-		$this->database->retrieveQuery('Folder-GetFolders')->bindInteger('id', $this->id)->executeQuery();
-		
-		echo $this->database . '<br />';
-		echo $this->id . '<br />';
-		echo $this->database->getNumberOfRows() . '<br />';
+		$this->database->select('Folder-GetFolders')->bindInteger('id', $this->id);
 		
 		$folders = array();
 		$foldersPointer = 0;
 		
-		foreach($this->database as $row) {
-			print_r($row);
-			$folders[$foldersPointer++] = new Folder(1);
+		foreach($this->database->executeQuery() as $row) {
+			$folders[$foldersPointer++] = new Folder($row->id);
 		}
 		
 		return $folders;
@@ -88,13 +89,13 @@ class Folder {
 			}
 		}
 		
-		$this->database->retrieveQuery('Folder-MakeFolder')->bindInteger('id', $this->id)->bindString('name', $name)->executeQuery();
+		$this->database->select('Folder-MakeFolder')->bindInteger('id', $this->id)->bindString('name', $name)->executeQuery();
 		
 		$newFolder = null;
 		
-		$this->database->retrieveQuery('Folder-GetNewFolder')->bindInteger('id', $this->id)->bindString('name', $name)->executeQuery();
+		$this->database->select('Folder-GetNewFolder')->bindInteger('id', $this->id)->bindString('name', $name)->executeQuery();
 		
-		foreach($this->database as $row) {
+		foreach($this->database->executeQuery() as $row) {
 			$newFolder = new Folder($row->id);
 		}
 		
