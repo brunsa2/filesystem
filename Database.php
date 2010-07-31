@@ -1,6 +1,6 @@
 <?php
 
-class Database implements Iterator {
+class Database {
 	private static $instance;
 	
 	private $databaseConnection;
