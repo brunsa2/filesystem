@@ -20,17 +20,6 @@ class Filesystem {
 		return self::$instance;
 	}
 	
-	private function __construct() {
-		$database = Database::getDatabase();
-		
-		$database->prepareQuery('SELECT name FROM folders WHERE id = ' . $database->name('id'))->storeQuery('Folder-GetFolder');
-		$database->prepareQuery('UPDATE folders SET name = ' . $database->name('name') . ' WHERE id = ' . $database->name('id'))->storeQuery('Folder-SetFolderName');
-		$database->prepareQuery('SELECT id FROM links WHERE folder = ' . $database->name('id'))->storeQuery('Folder-GetFiles');
-		$database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . $database->name('id'))->storeQuery('Folder-GetFolders');
-		$database->prepareQuery('INSERT INTO folders VALUES(NULL, :id, :name)')->storeQuery('Folder-MakeFolder');
-		$database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . $database->name('id') . ' AND name = ' . $database->name('name'))->storeQuery('Folder-GetNewFolder');
-	}
-	
 	private function initializeRoots() {
 		self::$rootTag = new Tag(1);
 		self::$rootFolder = new Folder(2);
