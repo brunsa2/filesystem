@@ -91,12 +91,8 @@ class Database implements Iterator {
 		}
 	}
 	
-	public function __toString($name = '') {
-		if(is_string($name) && $name != '') {
-			return $this->preparedQueries[$name]->queryString;
-		} else {
-			return $this->preparedQueries[$this->currentQuery]->queryString;
-		}
+	public function __toString() {
+		return $this->preparedQueries[$this->currentQuery]->queryString;
 	}
 }
 
