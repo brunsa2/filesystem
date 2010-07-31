@@ -1,10 +1,12 @@
 <?php
 
-class Database implements Iterator {
+class Database {
 	private static $instance;
 	
 	private $databaseConnection;
-	private $preparedQuery;
+	private $preparedQueries;
+	
+	private $currentQuery;
 	
 	private $results;
 	private $valid;
@@ -37,112 +39,65 @@ class Database implements Iterator {
 		}
 	}
 	
-	public function prepareQuery($query) {
-		$this->preparedQueries['current'] = $this->databaseConnection->prepare($query);
+	public function prepareQuery($query, $name) {
+		$this->preparedQueries[$name] = $this->databaseConnection->prepare($query);
+		$this->currentQuery = $name;
 		return $this;
 	}
 	
-	public function name($parameterName) {
-		return ':' . $parameterName;
-		return $this;
-	}
-	
-	public function bindString($name, $data, $length = 255) {
-		$name = ':' . $name;
-		$this->preparedQueries['current']->bindParam($name, $data, PDO::PARAM_STR, $length);
-		return $this;
-	}
-	
-	public function bindInteger($name, $data, $length = 11) {
-		$name = ':' . $name;
-		$this->preparedQueries['current']->bindParam($name, $data, PDO::PARAM_INT, $length);
-		return $this;
-	}
-	
-	public function executeQuery($queryName = '') {		
-		if($queryName == null || $queryName == '') {
-			$this->preparedQueries['current']->execute();
-			
-			$this->results = array();
-			$this->valid = false;
-			$this->numberOfRowsLeft = $this->numberOfRows = $this->currentRow =
-				$this->numbersOfRowsAffected = 0;
-			
-			while($row = $this->preparedQueries['current']->fetchObject()) {
-				$this->results[$this->numberOfRows++] = $row;
-			}
-			
-			$this->numberOfRowsLeft = $this->numberOfRows;
-			$this->numbersOfRowsAffected = $this->preparedQueries['current']->rowCount();
-			$this->currentRow = 0;
-			$this->valid = $this->numberOfRows != 0;
-		} else {
-			$this->preparedQueries['stored'][$queryName]->execute();
-			
-			$this->results = array();
-			$this->valid = false;
-			$this->numberOfRowsLeft = $this->numberOfRows = $this->currentRow =
-				$this->numbersOfRowsAffected = 0;
-			
-			while($row = $this->preparedQueries['stored'][$queryName]->fetchObject()) {
-				$this->results[$this->numberOfRows++] = $row;
-			}
-			
-			$this->numberOfRowsLeft = $this->numberOfRows;
-			$this->numbersOfRowsAffected = $this->preparedQueries['stored'][$queryName]->rowCount();
-			$this->currentRow = 0;
-			$this->valid = $this->numberOfRows != 0;
+	public function select($name) {
+		if(is_string($name) && $name != '') {
+			$this->currentQuery = $name;
 		}
 		
 		return $this;
 	}
 	
-	public function current() {
-		$this->numberOfRowsLeft--;
-		return $this->results[$this->currentRow];
+	public function bindString($name, $data, $length = 255) {
+		$name = ':' . $name;
+		$this->preparedQueries[$this->currentQuery]->bindParam($name, $data, PDO::PARAM_STR, $length);
+		return $this;
 	}
 	
-	public function rewind() {
-		$this->currentRow = 0;
+	public function bindInteger($name, $data, $length = 11) {
+		$name = ':' . $name;
+		$this->preparedQueries[$this->currentQuery]->bindParam($name, $data, PDO::PARAM_INT, $length);
+		return $this;
 	}
 	
-	public function key() {
-		return $this->currentRow;
+	public function executeQuery($name = '') {
+		$preparedQuery = $this->preparedQueries[$this->currentQuery];
+		if(is_string($name) && $name != '') {
+			$preparedQuery = $this->preparedQueries[$name];
+		}
+		
+		$preparedQuery->execute();
+		
+		$results = array();
+		$resultsPointer = 0;
+			
+		while($row = $preparedQuery->fetchObject()) {
+			$results[$resultsPointer++] = $row;
+		}
+		
+		return $results;
 	}
 	
-	public function next() {
-		if($this->currentRow < $this->numberOfRows - 1) {
-			$this->currentRow++;
+	public function getNumberOfRowsAffected($name = '') {
+		if(is_string($name) && $name != '') {
+			return $this->preparedQueries[$name]->rowCount();
 		} else {
-			$this->valid = false;
+			return $this->preparedQueries[$this->currentQuery]->rowCount();
 		}
 	}
 	
-	public function valid() {
-		return $this->valid;
+	public function __toString() {
+		return $this->preparedQueries[$this->currentQuery]->queryString;
 	}
-	
-	public function getNumberOfRows() {
-		return $this->numberOfRows;
-	}
-	
-	public function getNumberOfRowsLeft() {
-		return $this->numberOfRowsLeft;
-	}
-	
-	public function getNumberOfRowsAffected() {
-		return $this->numbersOfRowsAffected;
-	}
-	
-	public function storeQuery($name) {
-		$this->preparedQueries['stored'][$name] = $this->preparedQueries['current'];
-		return $this;
-	}
-	
-	public function retrieveQuery($name) {
-		$this->preparedQueries['current'] = $this->preparedQueries['stored'][$name];
-		return $this;
-	}
+}
+
+function name($name) {
+	return ':' . $name;
 }
 
 ?>
