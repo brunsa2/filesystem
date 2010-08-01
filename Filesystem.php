@@ -26,6 +26,10 @@ class Filesystem {
 	public static function getRoot() {
 		return self::$root;
 	}
+	
+	public function getFolder($path) {
+		return self::getRoot()->getFolder($path);
+	}
 }
 
 ?>
