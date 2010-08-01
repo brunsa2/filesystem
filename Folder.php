@@ -29,6 +29,7 @@ class Folder {
 		$this->database->prepareQuery('INSERT INTO folders VALUES(NULL, ' . name('id') . ', ' . name('name') . ')', 'Folder-MakeFolder');
 		$this->database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . name('id') . ' AND name = ' . name('name'), 'Folder-GetSubFolder');
 		$this->database->prepareQuery('SELECT parentfolder FROM folders WHERE id = ' . name('id'), 'Folder-GetParent');
+		$this->database->prepareQuery('DELETE FROM folders WHERE id = ' . name('id'), 'Folder-DeleteFolder');
 	}
 	
 	public function name($name = '') {
@@ -154,6 +155,19 @@ class Folder {
 		$this->database->select('Folder-MakeFolder')->bindInteger('id', $this->id)->bindString('name', $name)->executeQuery();
 		
 		return $this->getSubfolder($name);
+	}
+	
+	// TODO: Return exception if trying to delete root
+	public function deleteFolder() {
+		if($this->equals(Filesystem::getRoot())) {
+			return;
+		}
+		
+		$parentFolder = $this->getParent();
+		
+		$this->database->select('Folder-DeleteFolder')->bindInteger('id', $this->id)->executeQuery();
+		
+		return $parentFolder;
 	}
 	
 	public function __toString() {
