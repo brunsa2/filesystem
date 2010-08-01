@@ -13,9 +13,15 @@ class Folder {
 		$this->database->prepareQuery('SELECT name FROM folders WHERE id = ' . name('id'), 'Folder-GetFolder');
 		$this->database->select('Folder-GetFolder')->bindInteger('id', $id);
 		
-		foreach($this->database->executeQuery() as $row) {
-			$this->name = $row->name;
+		$folder = $this->database->executeQuery();
+		
+		if(count($folder) < 1) {
+			throw new FilesystemException(FilesystemException::FOLDER_DOES_NOT_EXIST);
+		} elseif(count($folder) > 1) {
+			throw new FilesystemException(FilesystemException::UNKNOWN_ERROR);
 		}
+		
+		$this->name = $folder[0]->name;
 		
 		$this->database->prepareQuery('UPDATE folders SET name = ' . name('name') . ' WHERE id = ' . name('id'), 'Folder-SetFolderName');
 		$this->database->prepareQuery('SELECT id FROM links WHERE folder = ' . name('id'), 'Folder-GetFiles');
@@ -67,29 +73,39 @@ class Folder {
 	public function getParent() {
 		$this->database->select('Folder-GetParent')->bindInteger('id', $this->id);
 		
-		$parentFolder = null;
+		$parentFolder = $this->database->executeQuery();
 		
-		foreach($this->database->executeQuery() as $row) {
-			$parentFolder = new Folder($row->parentfolder);
+		if(count($parentFolder) != 1) {
+			throw new FilesystemException(FilesystemException::UNKNOWN_ERROR);
 		}
 		
-		return $parentFolder;
+		if($parentFolder[0]->parentfolder == null) {
+			throw new FilesystemException(FilesystemException::FOLDER_DOES_NOT_EXIST);
+		}
+		
+		return new Folder($parentFolder[0]->parentfolder);
 	}
 	
 	public function getSubfolder($name) {
-		$this->database->select('Folder-GetSubFolder')->bindInteger('id', $this->id)->bindString('name', $name)->executeQuery();
+		$this->database->select('Folder-GetSubFolder')->bindInteger('id', $this->id)->bindString('name', $name);
 		
-		$subFolder = null;
+		$subFolder = $this->database->executeQuery();
 		
-		foreach($this->database->executeQuery() as $row) {
-			$subFolder = new Folder($row->id);
+		if(count($subFolder) < 1) {
+			throw new FilesystemException(FilesystemException::FOLDER_DOES_NOT_EXIST);
+		} elseif(count($subFolder) > 1) {
+			throw new FilesystemException(FilesystemException::UNKNOWN_ERROR);
 		}
 		
-		return $subFolder;
+		return new Folder($subFolder[0]->id);
 	}
 	
 	public function getFolder($path) {
 		$path = trim($path);
+		
+		if(preg_match('/^\/?([^\/#]+\/?)+$/', $path) == 0) {
+			throw new FilesystemException(FilesystemException::PATH_IS_INVALID);
+		}
 		
 		$folders = null;
 		preg_match_all('/[a-zA-Z0-9 \.]+/', $path, $folders);
@@ -101,7 +117,7 @@ class Folder {
 			$folder = $this;
 		}
 		
-		foreach($folders as $folderName) {
+		foreach($folders as $folderName) {			
 			if($folderName == '..') {
 				$folder = $folder->getParent();
 			} elseif($folderName != '.') {
@@ -110,7 +126,6 @@ class Folder {
 		}
 		
 		return $folder;
-		
 	}
 	
 	public function makeFolder($name) {
@@ -134,7 +149,7 @@ class Folder {
 	}
 	
 	public function __toString() {
-		return $this->name();
+		return $this->name() != null ? $this->name() : 'root';
 	}
 }
 
