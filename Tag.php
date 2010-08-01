@@ -10,21 +10,21 @@ class Tag {
 		$this->id = $id;
 		
 		$this->database = Database::getDatabase();
-		$this->database->prepareQuery('SELECT name FROM tags WHERE id = ' . $this->database->name('id'))->storeQuery('Tag-GetTag');
+		$this->database->prepareQuery('SELECT name FROM tags WHERE id = ' . name('id'), 'Tag-GetTag');
 		$this->database->bindInteger('id', $id)->executeQuery();
 		
 		foreach($this->database as $row) {
 			$this->name = $row->name;
 		}
 		
-		$this->database->prepareQuery('UPDATE tags SET name = ' . $this->database->name('name') . ' WHERE id = ' . $this->database->name('id'))->storeQuery('Tag-SetTagName');
-		$this->database->prepareQuery('SELECT parenttag FROM tags WHERE id = ' . $this->database->name('id'))->storeQuery('Tag-GetParent');
-		$this->database->prepareQuery('SELECT id FROM assigns, links WHERE assigns.tag = ' . $this->database->name('id'))->storeQuery('Tag-GetFiles');
+		$this->database->prepareQuery('UPDATE tags SET name = ' . >name('name') . ' WHERE id = ' . name('id'), 'Tag-SetTagName');
+		$this->database->prepareQuery('SELECT parenttag FROM tags WHERE id = ' . name('id'), 'Tag-GetParent');
+		$this->database->prepareQuery('SELECT id FROM assigns, links WHERE assigns.tag = ' . name('id'), 'Tag-GetFiles');
 	}
 	
 	public function name($name = '') {
 		if($name != null && $name != '') {
-			$this->database->retrieveQuery('Tag-SetTagName')->bindString('name', $name)->bindInteger('id', $this->id)->executeQuery();
+			$this->database->select('Tag-SetTagName')->bindString('name', $name)->bindInteger('id', $this->id)->executeQuery();
 			$this->name = $name;
 		}
 		
@@ -36,11 +36,11 @@ class Tag {
 	}
 	
 	public function parentTag() {
-		$this->database->retrieveQuery('Tag-GetParent')->bindInteger('id', $this->id)->executeQuery();
+		$this->database->select('Tag-GetParent')->bindInteger('id', $this->id);
 		
 		$parentTag = null;
 		
-		foreach($this->database as $row) {
+		foreach($this->database->executeQuery() as $row) {
 			$parentTag = new Tag($row->parenttag);
 		}
 		
@@ -51,9 +51,9 @@ class Tag {
 		$files = array();
 		$filesPointer = 0;
 		
-		$this->database->retrieveQuery('Tag-GetFiles')->bindInteger('id', $this->id)->executeQuery();
+		$this->database->select('Tag-GetFiles')->bindInteger('id', $this->id);
 		
-		foreach($this->database as $row) {
+		foreach($this->database->executeQuery() as $row) {
 			$files[$filesPointer++] = new File($row->id, true, false, false);
 		}
 		
@@ -64,9 +64,9 @@ class Tag {
 		$currentTagID = $this->id;
 		
 		while(true) {
-			$this->database->retrieveQuery('Tag-GetParent')->bindInteger('id', $currentTagID)->executeQuery();
+			$this->database->select('Tag-GetParent')->bindInteger('id', $currentTagID);
 			
-			foreach($this->database as $row) {
+			foreach($this->database->executeQuery() as $row) {
 				if($row->parenttag == null) {
 					return false;
 				} else {
