@@ -13,7 +13,7 @@ class Filesystem {
 	public function getFilesystem() {
 		if(self::$instance == null) {
 			self::$instance = new Filesystem();
-			self::$instance->initializeRoots();
+			self::$instance->initializeRoot();
 		}
 		
 		return self::$instance;
