@@ -103,7 +103,7 @@ class Folder {
 	public function getFolder($path) {
 		$path = trim($path);
 		
-		if(preg_match('/^\/?([^\/#]+\/?)+$/', $path) == 0) {
+		if(preg_match('/^\/?([^\/#]+\/?)*$/', $path) == 0) {
 			throw new FilesystemException(FilesystemException::PATH_IS_INVALID);
 		}
 		
@@ -119,9 +119,17 @@ class Folder {
 		
 		foreach($folders as $folderName) {			
 			if($folderName == '..') {
+				if($folder->equals(Filesystem::getRoot())) {
+					throw new FilesystemException(FilesystemException::ATTEMPT_TO_CIRCUMVENT_ROOT);
+				}
+				
 				$folder = $folder->getParent();
 			} elseif($folderName != '.') {
-				$folder = $folder->getSubfolder($folderName);
+				try {
+					$folder = $folder->getSubfolder($folderName);
+				} catch (FilesystemException $errorThrown) {
+					throw new FilesystemException(FilesystemException::PATH_DOES_NOT_EXIST);
+				}
 			}
 		}
 		
@@ -139,7 +147,7 @@ class Folder {
 		
 		foreach($currentFolders as $folder) {			
 			if((string) $folder == $name) {
-				return;
+				throw new Exception(FilesystemException::FOLDER_EXISTS);
 			}
 		}
 		
@@ -149,7 +157,7 @@ class Folder {
 	}
 	
 	public function __toString() {
-		return $this->name() != null ? $this->name() : 'root';
+		return $this->name();
 	}
 }
 
