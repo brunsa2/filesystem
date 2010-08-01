@@ -5,6 +5,7 @@ class FilesystemException extends Exception {
 	const PATH_IS_INVALID = 0x02;
 	const PATH_DOES_NOT_EXIST = 0x03;
 	const ATTEMPT_TO_CIRCUMVENT_ROOT = 0x04;
+	const FOLDER_EXISTS = 0x05;
 	const UNKNOWN_ERROR = 0xfe;
 	const INVALID= 0xff;
 	
@@ -13,7 +14,8 @@ class FilesystemException extends Exception {
 		self::PATH_IS_INVALID => 'Path is invalid',
 		self::PATH_DOES_NOT_EXIST => 'Path does not exist',
 		self::UNKNOWN_ERROR => 'Unknown error',
-		self::ATTEMPT_TO_CIRCUMVENT_ROOT => 'Attempt to circumvent root', 
+		self::ATTEMPT_TO_CIRCUMVENT_ROOT => 'Attempt to circumvent root',
+		self::FOLDER_EXISTS => 'Folder exists',
 		self::INVALID => 'Invalid filesystem exception'
 	);
 	
