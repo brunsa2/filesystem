@@ -78,10 +78,14 @@ class Folder {
 		preg_match_all('/[a-zA-Z0-9 \.]+/', $path, $folders);
 		$folders = $folders[0];
 		
-		$folder = $this;
+		if(substr($path, 0, 1) == '/') {
+			$folder = Filesystem::getRoot();
+		} else {
+			$folder = $this;
+		}
 		
 		foreach($folders as $folderName) {
-			$folder = $parentFolder->getSubfolder($folderName);
+			$folder = $folder->getSubfolder($folderName);
 		}
 		
 		return $folder;
