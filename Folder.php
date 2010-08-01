@@ -72,15 +72,16 @@ class Folder {
 	}
 	
 	public function getFolder($path) {
+		$path = trim($path);
+		
 		$folders = null;
 		preg_match_all('/[a-zA-Z0-9 \.]+/', $path, $folders);
 		$folders = $folders[0];
 		
-		$parentFolder = $folder = $this;
+		$folder = $this;
 		
 		foreach($folders as $folderName) {
 			$folder = $parentFolder->getSubfolder($folderName);
-			$parentFolder = $folder;
 		}
 		
 		return $folder;
