@@ -21,23 +21,8 @@ class Folder {
 		$this->database->prepareQuery('SELECT id FROM links WHERE folder = ' . name('id'), 'Folder-GetFiles');
 		$this->database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . name('id'), 'Folder-GetFolders');
 		$this->database->prepareQuery('INSERT INTO folders VALUES(NULL, ' . name('id') . ', ' . name('name') . ')', 'Folder-MakeFolder');
-		$this->database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . name('id') . ' AND name = ' . name('name'), 'Folder-GetNewFolder');
+		$this->database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . name('id') . ' AND name = ' . name('name'), 'Folder-GetSubFolder');
 	}
-	
-	/*
-	 
-	 private function __construct() {
-		$database = Database::getDatabase();
-		
-		$database->prepareQuery('SELECT name FROM folders WHERE id = ' . $database->name('id'))->storeQuery('Folder-GetFolder');
-		$database->prepareQuery('UPDATE folders SET name = ' . $database->name('name') . ' WHERE id = ' . $database->name('id'))->storeQuery('Folder-SetFolderName');
-		$database->prepareQuery('SELECT id FROM links WHERE folder = ' . $database->name('id'))->storeQuery('Folder-GetFiles');
-		$database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . $database->name('id'))->storeQuery('Folder-GetFolders');
-		$database->prepareQuery('INSERT INTO folders VALUES(NULL, :id, :name)')->storeQuery('Folder-MakeFolder');
-		$database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . $database->name('id') . ' AND name = ' . $database->name('name'))->storeQuery('Folder-GetNewFolder');
-	}
-	
-	*/
 	
 	public function name($name = '') {
 		if($name != null && $name != '') {
@@ -74,6 +59,34 @@ class Folder {
 		return $folders;
 	}
 	
+	public function getSubfolder($name) {
+		$this->database->select('Folder-GetSubFolder')->bindInteger('id', $this->id)->bindString('name', $name)->executeQuery();
+		
+		$subFolder = null;
+		
+		foreach($this->database->executeQuery() as $row) {
+			$subFolder = new Folder($row->id);
+		}
+		
+		return $subFolder;
+	}
+	
+	public function getFolder($path) {
+		$folders = null;
+		preg_match_all('/[a-zA-Z0-9 \.]+/', $path, $folders);
+		$folders = $folders[0];
+		
+		$parentFolder = $folder = $this;
+		
+		foreach($folders as $folderName) {
+			$folder = $parentFolder->getSubfolder($folderName);
+			$parentFolder = $folder;
+		}
+		
+		return $folder;
+		
+	}
+	
 	public function makeFolder($name) {
 		if(!is_string($name) || $name == '') {
 			return;
@@ -91,15 +104,7 @@ class Folder {
 		
 		$this->database->select('Folder-MakeFolder')->bindInteger('id', $this->id)->bindString('name', $name)->executeQuery();
 		
-		$newFolder = null;
-		
-		$this->database->select('Folder-GetNewFolder')->bindInteger('id', $this->id)->bindString('name', $name)->executeQuery();
-		
-		foreach($this->database->executeQuery() as $row) {
-			$newFolder = new Folder($row->id);
-		}
-		
-		return $newFolder;
+		return $this->getSubfolder($name);
 	}
 	
 	public function __toString() {
