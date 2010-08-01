@@ -22,7 +22,7 @@ class Filesystem {
 	
 	private function initializeRoots() {
 		self::$rootTag = new Tag(1);
-		self::$rootFolder = new Folder(2);
+		self::$rootFolder = new Folder(1);
 	}
 	
 	public static function getRootTag() {
