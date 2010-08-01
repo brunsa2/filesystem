@@ -22,6 +22,7 @@ class Folder {
 		$this->database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . name('id'), 'Folder-GetFolders');
 		$this->database->prepareQuery('INSERT INTO folders VALUES(NULL, ' . name('id') . ', ' . name('name') . ')', 'Folder-MakeFolder');
 		$this->database->prepareQuery('SELECT id FROM folders WHERE parentfolder = ' . name('id') . ' AND name = ' . name('name'), 'Folder-GetSubFolder');
+		$this->database->prepareQuery('SELECT parentfolder FROM folders WHERE id = ' . name('id'), 'Folder-GetParent');
 	}
 	
 	public function name($name = '') {
@@ -31,6 +32,10 @@ class Folder {
 		}
 		
 		return $this->name;
+	}
+	
+	public function equals($folder) {
+		return $this->id == $folder->id;
 	}
 	
 	public function getFilesInFolder() {
@@ -59,6 +64,18 @@ class Folder {
 		return $folders;
 	}
 	
+	public function getParent() {
+		$this->database->select('Folder-GetParent')->bindInteger('id', $this->id);
+		
+		$parentFolder = null;
+		
+		foreach($this->database->executeQuery() as $row) {
+			$parentFolder = new Folder($row->parentfolder);
+		}
+		
+		return $parentFolder;
+	}
+	
 	public function getSubfolder($name) {
 		$this->database->select('Folder-GetSubFolder')->bindInteger('id', $this->id)->bindString('name', $name)->executeQuery();
 		
@@ -85,7 +102,11 @@ class Folder {
 		}
 		
 		foreach($folders as $folderName) {
-			$folder = $folder->getSubfolder($folderName);
+			if($folderName == '..') {
+				$folder = $folder->getParent();
+			} elseif($folderName != '.') {
+				$folder = $folder->getSubfolder($folderName);
+			}
 		}
 		
 		return $folder;
